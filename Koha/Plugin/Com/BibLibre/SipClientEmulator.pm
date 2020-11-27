@@ -59,15 +59,43 @@ sub tool {
     my $query = $self->{'cgi'};
 
     my $op = $query->param('op') || '';
+    my $host = $query->param('host') || '';
+    my $port = $query->param('port') || '';
+    my $login = $query->param('login') || '';
+    my $pwrd = $query->param('pwrd') || '';
+    my $location = $query->param('location') || '';
+    my $item = $query->param('item') || '';
+    my $user = $query->param('user') || '';
+    my $message = $query->param('message') || '';
     my $result;
+
     if ( $op eq 'send' ) {
         ## TODO hardcoder ~/src -> misc/sip_cli_emulator.pl
-        $result = qx{/home/koha/src/misc/sip_cli_emulator.pl -a localhost -p 6001 -su test -sp test -l SITE 2>&1};
+        if ( $message eq 'item_information' or $message eq 'checkin' ) {
+            $result = qx{/home/koha/src/misc/sip_cli_emulator.pl -a $host -p $port -su $login -sp $pwrd -l $location --item $item -m $message 2>&1};
+        }
+        elsif ( $message eq 'patron_information' or $message eq 'patron_status_request' ) {
+            $result = qx{/home/koha/src/misc/sip_cli_emulator.pl -a $host -p $port -su $login -sp $pwrd -l $location --patron $user -m $message  2>&1};
+        }
+        elsif ( $message eq 'checkout' or $message eq 'hold' or $message eq 'renew' ) {
+            $result = qx{/home/koha/src/misc/sip_cli_emulator.pl -a $host -p $port -su $login -sp $pwrd -l $location --item $item --patron $user -m $message  2>&1};
+        }
+        else {
+            $result = qx{/home/koha/src/misc/sip_cli_emulator.pl -a $host -p $port -su $login -sp $pwrd -l $location 2>&1};
+        }
     }
 
     $template->param(
         op          => $op,
         result      => $result,
+        host        => $host,
+        port        => $port,
+        login       => $login,
+        pwrd        => $pwrd,
+        location    => $location,
+        item        => $item,
+        user        => $user,
+        message     => $message,
     );
 
     return $self->output_html( $template->output() );
